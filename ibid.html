@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Team Selection</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: var(--tg-theme-text-color, #222);
+            background-color: var(--tg-theme-bg-color, #fff);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 500px;
+            padding: 20px;
+        }
+        .header {
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--tg-theme-text-color, #222);
+        }
+        .ipl-logo {
+            max-width: 150px;
+            margin: 0 auto 15px;
+            display: block;
+        }
+        .button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: opacity 0.2s;
+        }
+        .button:active {
+            opacity: 0.8;
+        }
+        .match-card {
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .team-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .team-card {
+            background-color: var(--tg-theme-bg-color, #fff);
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            width: 45%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .team-card.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        .team-card img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+        .team-name {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .team-nickname {
+            font-size: 12px;
+            text-align: center;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        .vs-badge {
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+        .match-details {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color, #999);
+        }
+        .selected-team {
+            background-color: rgba(76, 175, 80, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+        .confirm-section {
+            margin-top: 20px;
+        }
+        .matches-list {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .nav-button {
+            flex: 1;
+            background-color: var(--tg-theme-bg-color, #fff);
+            border: 1px solid var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-color, #2481cc);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .nav-button.active {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+        }
+        .page {
+            display: none;
+            width: 100%;
+        }
+        .page.active {
+            display: block;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: var(--tg-theme-bg-color, #fff);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+        .leaderboard-table th {
+            background-color: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            font-weight: bold;
+        }
+        .rank {
+            text-align: center;
+            font-weight: bold;
+        }
+        .rank-1, .rank-2, .rank-3 {
+            font-size: 18px;
+        }
+        .rank-1 {
+            color: gold;
+        }
+        .rank-2 {
+            color: silver;
+        }
+        .rank-3 {
+            color: #cd7f32; /* bronze */
+        }
+        .team-icon {
+            font-size: 16px;
+            margin-right: 5px;
+        }
+        .points {
+            font-weight: bold;
+            text-align: center;
+        }
+        .match-selector {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #222);
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .venue-info {
+            text-align: center;
+            font-size: 13px;
+            color: var(--tg-theme-hint-color, #999);
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="/api/placeholder/150/60" alt="IPL Logo" class="ipl-logo">
+            <h1>IPL 2025 Team Selector</h1>
+        </div>
+        
+        <div class="navigation">
+            <button class="nav-button active" id="selectorBtn" onclick="showPage('selector')">Team Selector</button>
+            <button class="nav-button" id="leaderboardBtn" onclick="showPage('leaderboard')">Leaderboard</button>
+        </div>
+        
+        <div id="selectorPage" class="page active">
+            <div class="matches-list">
+                <select id="matchSelector" class="match-selector" onchange="changeMatch()">
+                    <option value="match1">Match 1: CSK vs MI - Mar 26, 7:30 PM</option>
+                    <option value="match2">Match 2: RCB vs KKR - Mar 27, 7:30 PM</option>
+                    <option value="match3">Match 3: DC vs GT - Mar 28, 7:30 PM</option>
+                    <option value="match4">Match 4: PBKS vs RR - Mar 29, 3:30 PM</option>
+                    <option value="match5">Match 5: SRH vs LSG - Mar 29, 7:30 PM</option>
+                </select>
+            </div>
+            
+            <div class="match-card">
+                <div class="match-details">
+                    <p id="matchTitle">Match 1 • March 26, 2025 • 7:30 PM IST</p>
+                </div>
+                
+                <div class="venue-info" id="venueInfo">
+                    MA Chidambaram Stadium, Chennai
+                </div>
+                
+                <div class="team-section">
+                    <div class="team-card" id="team1" onclick="selectTeam('team1')">
+                        <img src="/api/placeholder/60/60" alt="CSK Logo">
+                        <div class="team-name" id="team1Name">CSK</div>
+                        <div class="team-nickname" id="team1Nickname">Chennai Super Kings</div>
+                    </div>
+                    
+                    <div class="vs-badge">VS</div>
+                    
+                    <div class="team-card" id="team2" onclick="selectTeam('team2')">
+                        <img src="/api/placeholder/60/60" alt="MI Logo">
+                        <div class="team-name" id="team2Name">MI</div>
+                        <div class="team-nickname" id="team2Nickname">Mumbai Indians</div>
+                    </div>
+                </div>
+                
+                <div id="selectedTeam" class="selected-team">
+                    <p>You selected: <span id="teamName">None</span></p>
+                </div>
+                
+                <div class="confirm-section">
+                    <button class="button" id="confirmBtn" disabled>Confirm Selection</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="leaderboardPage" class="page">
+            <div class="match-card">
+                <div class="match-details">
+                    <p>IPL 2025 Prediction Leaderboard</p>
+                </div>
+                
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Teams</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                        <!-- Leaderboard data will be populated here -->
+                    </tbody>
+                </table>
+                
+                <div class="venue-info">
+                    Last updated: <span id="lastUpdated">March 25, 2025, 10:30 AM</span>
+                </div>
+            </div>
+        </div>
+        
+        <button class="button" id="closeAppBtn">Close</button>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        
+        // Expand the WebApp to full height
+        tg.expand();
+        
+        // Get elements
+        const matchSelector = document.getElementById('matchSelector');
+        const matchTitle = document.getElementById('matchTitle');
+        const venueInfo = document.getElementById('venueInfo');
+        const team1El = document.getElementById('team1');
+        const team2El = document.getElementById('team2');
+        const team1NameEl = document.getElementById('team1Name');
+        const team2NameEl = document.getElementById('team2Name');
+        const team1NicknameEl = document.getElementById('team1Nickname');
+        const team2NicknameEl = document.getElementById('team2Nickname');
+        const selectedTeamEl = document.getElementById('selectedTeam');
+        const teamNameEl = document.getElementById('teamName');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const closeAppBtn = document.getElementById('closeAppBtn');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        const lastUpdated = document.getElementById('lastUpdated');
+        
+        let selectedTeam = null;
+        
+        // IPL match data
+        const matches = {
+            match1: {
+                id: 'match1',
+                title: 'Match 1 • March 26, 2025 • 7:30 PM IST',
+                venue: 'MA Chidambaram Stadium, Chennai',
+                team1: { code: 'CSK', name: 'Chennai Super Kings' },
+                team2: { code: 'MI', name: 'Mumbai Indians' }
+            },
+            match2: {
+                id: 'match2',
+                title: 'Match 2 • March 27, 2025 • 7:30 PM IST',
+                venue: 'M. Chinnaswamy Stadium, Bangalore',
+                team1: { code: 'RCB', name: 'Royal Challengers Bangalore' },
+                team2: { code: 'KKR', name: 'Kolkata Knight Riders' }
+            },
+            match3: {
+                id: 'match3',
+                title: 'Match 3 • March 28, 2025 • 7:30 PM IST',
+                venue: 'Arun Jaitley Stadium, Delhi',
+                team1: { code: 'DC', name: 'Delhi Capitals' },
+                team2: { code: 'GT', name: 'Gujarat Titans' }
+            },
+            match4: {
+                id: 'match4',
+                title: 'Match 4 • March 29, 2025 • 3:30 PM IST',
+                venue: 'Punjab Cricket Association Stadium, Mohali',
+                team1: { code: 'PBKS', name: 'Punjab Kings' },
+                team2: { code: 'RR', name: 'Rajasthan Royals' }
+            },
+            match5: {
+                id: 'match5',
+                title: 'Match 5 • March 29, 2025 • 7:30 PM IST',
+                venue: 'Rajiv Gandhi International Stadium, Hyderabad',
+                team1: { code: 'SRH', name: 'Sunrisers Hyderabad' },
+                team2: { code: 'LSG', name: 'Lucknow Super Giants' }
+            }
+        };
+        
+        // Team colors for icons
+        const teamColors = {
+            'CSK': '💛',
+            'MI': '💙',
+            'RCB': '❤️',
+            'KKR': '💜',
+            'DC': '🔵',
+            'GT': '🔷',
+            'PBKS': '❤️',
+            'RR': '💗',
+            'SRH': '🧡',
+            'LSG': '💚'
+        };
+        
+        // Sample leaderboard data - in a real app, you'd fetch this from the server
+        const leaderboardData = [
+            { rank: 1, name: 'Virat Fan', teams: [{ code: 'RCB', count: 3 }, { code: 'CSK', count: 1 }], points: 25 },
+            { rank: 2, name: 'Cricket Master', teams: [{ code: 'MI', count: 2 }, { code: 'KKR', count: 2 }], points: 22 },
+            { rank: 3, name: 'IPL Guru', teams: [{ code: 'CSK', count: 4 }], points: 18 },
+            { rank: 4, name: 'Dhoni Supporter', teams: [{ code: 'CSK', count: 3 }, { code: 'MI', count: 1 }], points: 15 },
+            { rank: 5, name: 'Cricket Pro', teams: [{ code: 'RR', count: 2 }, { code: 'DC', count: 2 }], points: 12 },
+            { rank: 6, name: 'Rohit Fan', teams: [{ code: 'MI', count: 4 }], points: 10 },
+            { rank: 7, name: 'IPL Expert', teams: [{ code: 'SRH', count: 2 }, { code: 'LSG', count: 1 }], points: 8 },
+            { rank: 8, name: 'Cricket Lover', teams: [{ code: 'KKR', count: 2 }, { code: 'GT', count: 1 }], points: 7 },
+            { rank: 9, name: 'T20 Specialist', teams: [{ code: 'PBKS', count: 2 }, { code: 'RCB', count: 1 }], points: 5 },
+            { rank: 10, name: 'Cricket Enthusiast', teams: [{ code: 'LSG', count: 1 }, { code: 'DC', count: 1 }], points: 3 }
+        ];
+        
+        // Function to populate leaderboard
+        function populateLeaderboard() {
+            leaderboardBody.innerHTML = '';
+            
+            leaderboardData.forEach(user => {
+                let row = document.createElement('tr');
+                
+                // Rank column with special styling for top 3
+                let rankCell = document.createElement('td');
+                rankCell.className = 'rank';
+                if (user.rank <= 3) {
+                    rankCell.className += ' rank-' + user.rank;
+                }
+                rankCell.textContent = user.rank;
+                
+                // User name column
+                let nameCell = document.createElement('td');
+                nameCell.textContent = user.name;
+                
+                // Teams column with team icons
+                let teamsCell = document.createElement('td');
+                let teamsHtml = '';
+                user.teams.forEach(team => {
+                    teamsHtml += `<span class="team-icon">${teamColors[team.code] || '🏏'}</span>${team.code} (${team.count}) `;
+                });
+                teamsCell.innerHTML = teamsHtml;
+                
+                // Points column
+                let pointsCell = document.createElement('td');
+                pointsCell.className = 'points';
+                pointsCell.textContent = user.points;
+                
+                // Append cells to row
+                row.appendChild(rankCell);
+                row.appendChild(nameCell);
+                row.appendChild(teamsCell);
+                row.appendChild(pointsCell);
+                
+                // Append row to table body
+                leaderboardBody.appendChild(row);
+            });
+        }
+        
+        // Show page function
+        function showPage(pageId) {
+            // Hide all pages
+            document.getElementById('selectorPage').classList.remove('active');
+            document.getElementById('leaderboardPage').classList.remove('active');
+            
+            // Remove active class from all nav buttons
+            document.getElementById('selectorBtn').classList.remove('active');
+            document.getElementById('leaderboardBtn').classList.remove('active');
+            
+            // Show selected page and activate button
+            if (pageId === 'selector') {
+                document.getElementById('selectorPage').classList.add('active');
+                document.getElementById('selectorBtn').classList.add('active');
+            } else if (pageId === 'leaderboard') {
+                document.getElementById('leaderboardPage').classList.add('active');
+                document.getElementById('leaderboardBtn').classList.add('active');
+                populateLeaderboard(); // Populate leaderboard when showing the page
+            }
+        }
+        
+        // Change match function
+        function changeMatch() {
+            const matchId = matchSelector.value;
+            const match = matches[matchId];
+            
+            // Reset selection
+            resetSelection();
+            
+            // Update match details
+            matchTitle.textContent = match.title;
+            venueInfo.textContent = match.venue;
+            
+            // Update team info
+            team1NameEl.textContent = match.team1.code;
+            team2NameEl.textContent = match.team2.code;
+            team1NicknameEl.textContent = match.team1.name;
+            team2NicknameEl.textContent = match.team2.name;
+        }
+        
+        // Reset selection
+        function resetSelection() {
+            team1El.classList.remove('selected');
+            team2El.classList.remove('selected');
+            selectedTeamEl.style.display = 'none';
+            confirmBtn.disabled = true;
+            tg.MainButton.hide();
+            selectedTeam = null;
+        }
+        
+        // Select team function
+        function selectTeam(teamId) {
+            // Reset selection
+            team1El.classList.remove('selected');
+            team2El.classList.remove('selected');
+            
+            const matchId = matchSelector.value;
+            const match = matches[matchId];
+            
+            // Set new selection
+            if (teamId === 'team1') {
+                team1El.classList.add('selected');
+                selectedTeam = {
+                    id: teamId,
+                    code: match.team1.code,
+                    name: match.team1.name
+                };
+            } else {
+                team2El.classList.add('selected');
+                selectedTeam = {
+                    id: teamId,
+                    code: match.team2.code,
+                    name: match.team2.name
+                };
+            }
+            
+            // Show selected team
+            selectedTeamEl.style.display = 'block';
+            teamNameEl.textContent = selectedTeam.name;
+            
+            // Enable confirm button
+            confirmBtn.disabled = false;
+            
+            // Show main button
+            tg.MainButton.setText('CONFIRM SELECTION');
+            tg.MainButton.show();
+        }
+        
+        // Confirm selection function
+        function confirmSelection() {
+            if (selectedTeam) {
+                const matchId = matchSelector.value;
+                const match = matches[matchId];
+                
+                const selectionData = {
+                    matchId: matchId,
+                    matchTitle: match.title,
+                    venue: match.venue,
+                    teamId: selectedTeam.id,
+                    teamCode: selectedTeam.code,
+                    teamName: selectedTeam.name,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Send data back to the bot
+                tg.sendData(JSON.stringify(selectionData));
+            } else {
+                alert("Please select a team first");
+            }
+        }
+        
+        // Event listeners
+        confirmBtn.addEventListener('click', confirmSelection);
+        closeAppBtn.addEventListener('click', () => tg.close());
+        
+        // Main button configuration
+        tg.MainButton.setText('CONFIRM SELECTION');
+        tg.MainButton.onClick(confirmSelection);
+        tg.MainButton.hide(); // Initially hidden until selection is made
+        
+        // Initialize leaderboard with current date and time
+        lastUpdated.textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
