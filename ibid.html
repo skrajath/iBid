@@ -521,9 +521,9 @@
             // Enable confirm button
             confirmBtn.disabled = false;
             
-            // Show main button
-            tg.MainButton.setText('CONFIRM SELECTION');
-            tg.MainButton.show();
+            // Use the Main Button OR the confirm button, not both
+            // Hide the Main Button since we're using the confirm button in the UI
+            tg.MainButton.hide();
         }
         
         // Confirm selection function
@@ -552,11 +552,6 @@
         // Event listeners
         confirmBtn.addEventListener('click', confirmSelection);
         closeAppBtn.addEventListener('click', () => tg.close());
-        
-        // Main button configuration
-        tg.MainButton.setText('CONFIRM SELECTION');
-        tg.MainButton.onClick(confirmSelection);
-        tg.MainButton.hide(); // Initially hidden until selection is made
         
         // Initialize leaderboard with current date and time
         lastUpdated.textContent = new Date().toLocaleString();
